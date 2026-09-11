@@ -47,21 +47,22 @@ class StructureJudgmentFieldsTests(unittest.TestCase):
         s = valid_structure(priority_score=0)
         self.assertEqual(s.priority_score, 0)
 
-    def test_missing_required_judgment_field_raises(self):
+    def test_missing_judgment_field_degrades_to_default(self):
+        # Judgment fields have safe defaults so a model that omits one (e.g. DeepSeek
+        # occasionally dropping is_known_affiliation) does not fail the whole batch;
+        # the paper is then treated as non-relevant and filtered out downstream.
         data = {
             "tldr": "t",
             "motivation": "m",
             "method": "m",
             "result": "r",
             "conclusion": "c",
-            "is_recommendation_related": True,
-            "is_high_quality": True,
-            "is_known_affiliation": True,
-            "priority_score": 60,
-            # reason omitted -> strict schema should raise
         }
-        with self.assertRaises(ValidationError):
-            Structure(**data)
+        s = Structure(**data)
+        self.assertFalse(s.is_recommendation_related)
+        self.assertFalse(s.is_known_affiliation)
+        self.assertEqual(s.priority_score, 0)
+        self.assertEqual(s.reason, "")
 
     def test_model_dump_includes_new_fields(self):
         s = valid_structure()
