@@ -1,4 +1,12 @@
-Please analyze the following abstract of papers. 
+Please analyze the following paper. It was fetched from broad arXiv categories, so
+determine by content whether it is actually about recommender systems (relevance),
+not by its listed category alone.
 
 Content:
 {content}
+
+Author names: {authors}
+
+Answer the fields: tldr, motivation, method, result, conclusion, and the judgment
+fields is_recommendation_related, is_high_quality, is_known_affiliation,
+priority_score (0-100), and a short reason.

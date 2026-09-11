@@ -118,9 +118,34 @@ jobs:
             exit 1
         fi
         echo "AI增强处理完成 / AI enhancement processing completed"
-        
-    - name: Convert to Markdown
+
+    - name: Filter and rank papers
+      id: filter_step
       if: steps.dedup_check.outputs.has_new_content == 'true'
+      run: |
+        source .venv/bin/activate
+        today=${{ steps.crawl_step.outputs.crawl_date }}
+        echo "过滤并排序论文... / Filtering and ranking RecSys papers..."
+
+        cd ai
+        export LANGUAGE="${{ vars.LANGUAGE }}"
+
+        python filter.py --data ../data/${today}_AI_enhanced_${LANGUAGE}.jsonl
+        filter_rc=$?
+
+        # 若无论文通过过滤，跳过当天发布 / Skip publishing if nothing survived filtering
+        if [ "$filter_rc" -eq 1 ]; then
+            echo "所有论文均被过滤，跳过发布 / All papers filtered out, skipping publish"
+            echo "papers_survived=false" >> $GITHUB_OUTPUT
+        elif [ "$filter_rc" -ne 0 ]; then
+            echo "过滤步骤出错 / Filter step failed: $filter_rc"
+            exit 1
+        else
+            echo "papers_survived=true" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Convert to Markdown
+      if: steps.filter_step.outputs.papers_survived == 'true'
       run: |
         source .venv/bin/activate
         today=${{ steps.crawl_step.outputs.crawl_date }}
@@ -151,14 +176,14 @@ jobs:
         echo "Markdown转换完成 / Markdown conversion completed"
         
     - name: Update file list
-      if: steps.dedup_check.outputs.has_new_content == 'true'
+      if: steps.filter_step.outputs.papers_survived == 'true'
       run: |
         echo "更新文件列表... / Updating file list..."
         ls data/*.jsonl | sed 's|data/||' > assets/file-list.txt
         echo "文件列表更新完成 / File list updated"
 
     - name: Generate password hash and inject into config
-      if: steps.dedup_check.outputs.has_new_content == 'true'
+      if: steps.filter_step.outputs.papers_survived == 'true'
       run: |
         echo "🔐 Generating password hash for authentication..."
 
@@ -193,8 +218,10 @@ jobs:
 
     - name: Summary
       run: |
-        if [ "${{ steps.dedup_check.outputs.has_new_content }}" = "true" ]; then
-          echo "✅ 工作流完成：去重发现新内容并成功处理 / Workflow completed: Smart deduplication found new content and processed successfully"
+        if [ "${{ steps.filter_step.outputs.papers_survived }}" = "true" ]; then
+          echo "✅ 工作流完成：发现新论文并成功处理 / Workflow completed: New papers found and processed successfully"
+        elif [ "${{ steps.filter_step.outputs.papers_survived }}" = "false" ]; then
+          echo "ℹ️ 工作流完成：新论文均已过滤（不相关/低质量），跳过发布 / Workflow completed: All new papers filtered out (irrelevant/low quality), skipped publishing"
         else
           case "${{ steps.dedup_check.outputs.skip_reason }}" in
             "no_new_content")
@@ -213,7 +240,7 @@ jobs:
         fi
         
     - name: Inject repository info into data-config.js
-      if: steps.dedup_check.outputs.has_new_content == 'true'
+      if: steps.filter_step.outputs.papers_survived == 'true'
       run: |
         echo "注入仓库信息到 data-config.js... / Injecting repository info into data-config.js..."
         
@@ -235,7 +262,7 @@ jobs:
         fi
 
     - name: Commit code changes to main branch
-      if: steps.dedup_check.outputs.has_new_content == 'true'
+      if: steps.filter_step.outputs.papers_survived == 'true'
       run: |
         git config --global user.email "${{ vars.EMAIL }}"
         git config --global user.name "${{ vars.NAME }}"
@@ -257,7 +284,7 @@ jobs:
         fi
 
     - name: Push code changes to main branch
-      if: steps.dedup_check.outputs.has_new_content == 'true'
+      if: steps.filter_step.outputs.papers_survived == 'true'
       run: |
         # 设置Git配置以处理自动合并 / Set Git config for automatic merging
         git config pull.rebase true
@@ -280,7 +307,7 @@ jobs:
         done
 
     - name: Prepare data files for data branch
-      if: steps.dedup_check.outputs.has_new_content == 'true'
+      if: steps.filter_step.outputs.papers_survived == 'true'
       run: |
         echo "准备数据文件... / Preparing data files..."
         today=${{ steps.crawl_step.outputs.crawl_date }}
@@ -296,7 +323,7 @@ jobs:
         echo "数据文件已保存到临时目录 / Data files saved to temporary directory"
 
     - name: Setup and commit to data branch
-      if: steps.dedup_check.outputs.has_new_content == 'true'
+      if: steps.filter_step.outputs.papers_survived == 'true'
       run: |
         git config --global user.email "${{ vars.EMAIL }}"
         git config --global user.name "${{ vars.NAME }}"
@@ -350,7 +377,7 @@ jobs:
         fi
 
     - name: Push data changes to data branch
-      if: steps.dedup_check.outputs.has_new_content == 'true'
+      if: steps.filter_step.outputs.papers_survived == 'true'
       run: |
         # 设置Git配置以处理自动合并 / Set Git config for automatic merging
         git config pull.rebase true

@@ -3,6 +3,8 @@
 
 Main category: {cate}
 
+Priority: {priority_score}
+
 TL;DR: {tldr}
 
 

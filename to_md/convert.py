@@ -63,6 +63,7 @@ if __name__ == "__main__":
                         method=ai_data.get('method', ''),
                         result=ai_data.get('result', ''),
                         conclusion=ai_data.get('conclusion', ''),
+                        priority_score=ai_data.get('priority_score', ''),
                         cate=item['categories'][0],
                         idx=next(idx)
                     )
