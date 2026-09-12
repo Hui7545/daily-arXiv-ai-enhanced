@@ -13,9 +13,9 @@ class Structure(BaseModel):
     # a paper missing the judgment is treated as non-relevant and filtered out.
     is_relevant: bool = Field(
         default=False,
-        description="Whether this paper is genuinely about search, recommendation, "
-                    "advertising, personalization, ranking, information retrieval, "
-                    "or a closely related topic"
+        description="Whether this paper's core contribution is to search engines, "
+                    "online advertising, recommender systems, or a directly adjacent "
+                    "search/ads/recommendation ranking or personalization component"
     )
     is_high_quality: bool = Field(
         default=False,

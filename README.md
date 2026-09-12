@@ -68,6 +68,20 @@ Otherwise, you can watch the video above first and directly use this repo in htt
 10. Set up GitHub pages: Go to your own repo -> Settings -> Pages. In `Build and deployment`, set `Source="Deploy from a branch"`, `Branch="main", "/(root)"`. Wait for a few minutes, go to https://\<username\>.github.io/daily-arXiv-ai-enhanced/. Please see this [issue](https://github.com/dw-dengwei/daily-arXiv-ai-enhanced/issues/14) for more precise instructions.
 </details>
 
+## Local isolated testing
+
+Run the pipeline in a timestamped copy under `local_test/runs/` without changing
+the repository's main `data/` or `assets/` directories:
+
+```powershell
+.\.venv\Scripts\python.exe local_test\run.py --mode unit
+.\.venv\Scripts\python.exe local_test\run.py --mode crawl --max-papers 5
+.\.venv\Scripts\python.exe local_test\run.py --mode full --max-papers 5
+```
+
+See [local_test/README.md](./local_test/README.md) for configuration and output
+details.
+
 # Contributors
 Thanks to the following special contributors for contributing code, discovering bugs, and sharing useful ideas for this project!!!
 If you find that I missed your contribution below, please feel free to contact me through email.

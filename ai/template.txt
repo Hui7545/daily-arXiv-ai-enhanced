@@ -1,7 +1,9 @@
 Please analyze the following paper. It was fetched from broad arXiv categories, so
-determine whether its core subject is search, recommendation, advertising,
-personalization, ranking, information retrieval, or a closely related topic. Do not
-use the listed arXiv category alone.
+determine whether its core subject is a search engine, online advertising system,
+recommender system, or a directly adjacent component of those systems. Do not count
+generic RAG/retrieval, knowledge graph retrieval, agent memory, QA benchmarks, or
+domain document search as relevant unless the paper's core product is search, ads,
+or recommendation itself. Do not use the listed arXiv category alone.
 
 Title:
 {title}

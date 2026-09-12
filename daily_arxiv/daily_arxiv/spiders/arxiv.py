@@ -10,6 +10,8 @@ class ArxivSpider(scrapy.Spider):
         categories = categories.split(",")
         # 保存目标分类列表，用于后续验证
         self.target_categories = set(map(str.strip, categories))
+        self.max_papers = int(os.environ.get("ARXIV_MAX_PAPERS", "0") or 0)
+        self.yielded_papers = 0
         self.start_urls = [
             f"https://arxiv.org/list/{cat}/new" for cat in self.target_categories
         ]  # 起始URL（计算机科学领域的最新论文）
@@ -27,6 +29,9 @@ class ArxivSpider(scrapy.Spider):
 
         # 遍历每篇论文的详细信息
         for paper in response.css("dl dt"):
+            if self.max_papers > 0 and self.yielded_papers >= self.max_papers:
+                return
+
             paper_anchor = paper.css("a[name^='item']::attr(name)").get()
             if not paper_anchor:
                 continue
@@ -65,6 +70,7 @@ class ArxivSpider(scrapy.Spider):
                         "id": arxiv_id,
                         "categories": list(paper_categories),  # 添加分类信息用于调试
                     }
+                    self.yielded_papers += 1
                     self.logger.info(f"Found paper {arxiv_id} with categories {paper_categories}")
                 else:
                     self.logger.debug(f"Skipped paper {arxiv_id} with categories {paper_categories} (not in target {self.target_categories})")
@@ -75,3 +81,4 @@ class ArxivSpider(scrapy.Spider):
                     "id": arxiv_id,
                     "categories": [],
                 }
+                self.yielded_papers += 1

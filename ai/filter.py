@@ -1,9 +1,10 @@
 """Filter and rank the day's AI-enhanced papers by relevance/quality/priority.
 
 Runs after AI enhancement, before markdown conversion. It hard-filters out papers
-that the LLM judged unrelated to search, recommendation, advertising, or adjacent
-topics, then sorts the survivors by `priority_score` descending. It rewrites the
-input jsonl in place so downstream tools need no path changes.
+that the LLM judged unrelated to search engines, online advertising, recommender
+systems, or directly adjacent search/ads/recommendation components, then sorts the
+survivors by `priority_score` descending. It rewrites the input jsonl in place so
+downstream tools need no path changes.
 
 Filtering rules key off the `AI` judgment fields produced by enhance.py:
 - is_relevant: the hard gate. Papers not judged relevant are dropped. Historical
