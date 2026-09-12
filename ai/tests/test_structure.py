@@ -16,7 +16,7 @@ def valid_structure(**overrides):
         "method": "m",
         "result": "r",
         "conclusion": "c",
-        "is_recommendation_related": True,
+        "is_relevant": True,
         "is_high_quality": True,
         "is_known_affiliation": True,
         "priority_score": 60,
@@ -29,7 +29,7 @@ def valid_structure(**overrides):
 class StructureJudgmentFieldsTests(unittest.TestCase):
     def test_accepts_all_judgment_fields(self):
         s = valid_structure()
-        self.assertTrue(s.is_recommendation_related)
+        self.assertTrue(s.is_relevant)
         self.assertTrue(s.is_high_quality)
         self.assertTrue(s.is_known_affiliation)
         self.assertEqual(s.priority_score, 60)
@@ -59,7 +59,7 @@ class StructureJudgmentFieldsTests(unittest.TestCase):
             "conclusion": "c",
         }
         s = Structure(**data)
-        self.assertFalse(s.is_recommendation_related)
+        self.assertFalse(s.is_relevant)
         self.assertFalse(s.is_known_affiliation)
         self.assertEqual(s.priority_score, 0)
         self.assertEqual(s.reason, "")
@@ -68,7 +68,7 @@ class StructureJudgmentFieldsTests(unittest.TestCase):
         s = valid_structure()
         dumped = s.model_dump()
         for field in (
-            "is_recommendation_related",
+            "is_relevant",
             "is_high_quality",
             "is_known_affiliation",
             "priority_score",

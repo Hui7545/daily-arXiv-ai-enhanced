@@ -99,7 +99,7 @@ def process_single_item(chain, item: Dict, language: str) -> Dict:
         "result": "Result analysis unavailable",
         "conclusion": "Conclusion extraction failed",
         # Judgment fields: sentinels so failed papers get filtered (not surfaced)
-        "is_recommendation_related": False,
+        "is_relevant": False,
         "is_high_quality": False,
         "is_known_affiliation": False,
         "priority_score": 0,
@@ -109,8 +109,13 @@ def process_single_item(chain, item: Dict, language: str) -> Dict:
     try:
         response: Structure = chain.invoke({
             "language": language,
-            "content": item['summary'],
-            "authors": item.get("authors", []),
+            "title": item.get("title", ""),
+            "authors": ", ".join(item.get("authors", [])),
+            "affiliations": json.dumps(
+                item.get("author_affiliations", []),
+                ensure_ascii=False,
+            ),
+            "abstract": item.get("summary", ""),
         })
         item['AI'] = response.model_dump()
     except langchain_core.exceptions.OutputParserException as e:

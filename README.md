@@ -43,7 +43,7 @@ https://github.com/user-attachments/assets/b25712a4-fb8d-484f-863d-e8da6922f9d7
 
 
 # How to use
-This repo will daily crawl arXiv papers about **Recommender Systems (RecSys)** — covering **cs.IR, cs.LG, cs.AI** — use an AI model to summarize them in **Chinese**, and **automatically prioritize papers from well-known companies, universities, and researchers while filtering out low-quality or irrelevant papers**.
+This repo will daily crawl arXiv papers about **search, recommendation, advertising, and closely related topics** — covering **cs.IR, cs.LG, cs.AI** — use an AI model to summarize them in **Chinese**, and **automatically prioritize papers from well-known companies, universities, and researchers while filtering out irrelevant papers**.
 If you wish to crawl other arXiv categories, use other LLMs, or other languages, please follow the instructions.
 Otherwise, you can watch the video above first and directly use this repo in https://dw-dengwei.github.io/daily-arXiv-ai-enhanced/. Please star it if you like :)
 

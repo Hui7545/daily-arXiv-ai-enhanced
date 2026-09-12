@@ -1,14 +1,13 @@
 """Filter and rank the day's AI-enhanced papers by relevance/quality/priority.
 
 Runs after AI enhancement, before markdown conversion. It hard-filters out papers
-that the LLM judged not recommendation-related or low quality, then sorts the
-survivors by `priority_score` descending. It rewrites the input jsonl in place so
-downstream tools (convert.py, the frontend) need no path changes.
+that the LLM judged unrelated to search, recommendation, advertising, or adjacent
+topics, then sorts the survivors by `priority_score` descending. It rewrites the
+input jsonl in place so downstream tools need no path changes.
 
 Filtering rules key off the `AI` judgment fields produced by enhance.py:
-- is_recommendation_related: the hard gate. Papers not judged recommendation-related
-  are dropped (missing the field also drops, matching enhance.py's safe-degradation
-  sentinel of False).
+- is_relevant: the hard gate. Papers not judged relevant are dropped. Historical
+  records using is_recommendation_related remain supported as a fallback.
 - is_high_quality: intentionally NOT a hard gate. Quality is a subjective LLM call
   that tends to be conservative and would wrongly purge many on-topic papers (a
   real DeepSeek run dropped 2 of 2 relevant papers this way). It is still reflected
@@ -52,11 +51,13 @@ def write_items(items, path):
 def keep(item):
     """Return True when the paper should be published.
 
-    Only `is_recommendation_related` is a hard gate. `is_high_quality` deliberately
+    Only `is_relevant` is a hard gate. `is_high_quality` deliberately
     does not exclude papers (see module docstring) and instead feeds ranking via
     priority_score.
     """
     ai = item.get("AI") or {}
+    if "is_relevant" in ai:
+        return ai.get("is_relevant", False)
     return ai.get("is_recommendation_related", False)
 
 

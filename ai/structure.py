@@ -11,11 +11,11 @@ class Structure(BaseModel):
     # These default to safe values so a model that occasionally omits a field (as
     # DeepSeek does) degrades gracefully instead of failing the whole batch:
     # a paper missing the judgment is treated as non-relevant and filtered out.
-    is_recommendation_related: bool = Field(
+    is_relevant: bool = Field(
         default=False,
-        description="Whether this paper is genuinely about recommender systems "
-                    "(user/item modeling, collaborative filtering, sequential "
-                    "recommendation, CTR/ranking, LLM-based recommendation, etc.)"
+        description="Whether this paper is genuinely about search, recommendation, "
+                    "advertising, personalization, ranking, information retrieval, "
+                    "or a closely related topic"
     )
     is_high_quality: bool = Field(
         default=False,
@@ -24,13 +24,13 @@ class Structure(BaseModel):
     )
     is_known_affiliation: bool = Field(
         default=False,
-        description="Whether any author is from a well-known institution or company "
-                    "(top universities, big labs, major tech companies)"
+        description="Whether the supplied author affiliation evidence establishes "
+                    "that an author is from a well-known institution or company"
     )
     priority_score: int = Field(
         default=0, ge=0, le=100,
         description="Importance priority 0-100. Higher = more worth reading. "
-                    "Reflects relevance, technical quality, and author/institution fame."
+                    "Reflects relevance, technical quality, and author/institution evidence."
     )
     reason: str = Field(
         default="",

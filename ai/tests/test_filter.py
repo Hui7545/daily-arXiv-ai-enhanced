@@ -16,7 +16,7 @@ def make_item(**ai_overrides):
         "method": "m",
         "result": "r",
         "conclusion": "c",
-        "is_recommendation_related": True,
+        "is_relevant": True,
         "is_high_quality": True,
         "is_known_affiliation": False,
         "priority_score": 50,
@@ -27,18 +27,24 @@ def make_item(**ai_overrides):
 
 
 class KeepTests(unittest.TestCase):
-    def test_keeps_recommendation_related_high_quality(self):
+    def test_keeps_relevant_high_quality(self):
         self.assertTrue(keep(make_item(priority_score=80)))
 
-    def test_drops_not_recommendation_related(self):
-        self.assertFalse(keep(make_item(is_recommendation_related=False)))
+    def test_drops_not_relevant(self):
+        self.assertFalse(keep(make_item(is_relevant=False)))
+
+    def test_supports_legacy_recommendation_related_field(self):
+        item = make_item(is_relevant=False)
+        del item["AI"]["is_relevant"]
+        item["AI"]["is_recommendation_related"] = True
+        self.assertTrue(keep(item))
 
     def test_low_quality_does_not_exclude_relevant_paper(self):
         # is_high_quality is intentionally NOT a hard gate; only relevance decides.
         self.assertTrue(keep(make_item(is_high_quality=False, priority_score=30)))
 
     def test_missing_judgment_fields_are_dropped(self):
-        # is_recommendation_related defaults to False when absent
+        # is_relevant defaults to False when absent
         item = {"id": "x", "title": "t", "AI": {"tldr": "t"}}
         self.assertFalse(keep(item))
 

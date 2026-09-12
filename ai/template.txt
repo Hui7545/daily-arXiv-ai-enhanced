@@ -1,12 +1,20 @@
 Please analyze the following paper. It was fetched from broad arXiv categories, so
-determine by content whether it is actually about recommender systems (relevance),
-not by its listed category alone.
+determine whether its core subject is search, recommendation, advertising,
+personalization, ranking, information retrieval, or a closely related topic. Do not
+use the listed arXiv category alone.
 
-Content:
-{content}
+Title:
+{title}
 
-Author names: {authors}
+Authors:
+{authors}
+
+Author affiliations:
+{affiliations}
+
+Abstract:
+{abstract}
 
 Answer the fields: tldr, motivation, method, result, conclusion, and the judgment
-fields is_recommendation_related, is_high_quality, is_known_affiliation,
+fields is_relevant, is_high_quality, is_known_affiliation,
 priority_score (0-100), and a short reason.
