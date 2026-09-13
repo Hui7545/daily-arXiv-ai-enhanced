@@ -76,6 +76,27 @@ class StructureJudgmentFieldsTests(unittest.TestCase):
         ):
             self.assertIn(field, dumped)
 
+    def test_false_text_field_is_coerced_to_string(self):
+        s = Structure(**{**valid_structure().__dict__, "method": False})
+        self.assertEqual("false", s.method)
+
+    def test_missing_text_fields_use_safe_defaults(self):
+        s = Structure(
+            is_relevant=True,
+            is_high_quality=True,
+            is_known_affiliation=False,
+            priority_score=50,
+            reason="ok",
+        )
+        self.assertEqual("Summary generation failed", s.tldr)
+        self.assertEqual("Method extraction failed", s.method)
+
+    def test_string_boolean_field_is_normalized(self):
+        s = Structure(
+            **{**valid_structure().__dict__, "is_relevant": "False"}
+        )
+        self.assertFalse(s.is_relevant)
+
 
 if __name__ == "__main__":
     unittest.main()
