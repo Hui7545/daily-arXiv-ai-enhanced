@@ -98,6 +98,15 @@ jobs:
                 ;;
         esac
         
+    - name: Batch enrich metadata
+      if: steps.dedup_check.outputs.has_new_content == 'true'
+      run: |
+        source .venv/bin/activate
+        today=${{ steps.crawl_step.outputs.crawl_date }}
+        export OPENALEX_MAILTO="${{ vars.EMAIL }}"
+        echo "批量补充论文元数据... / Batch enriching paper metadata..."
+        python daily_arxiv/enrich.py --data data/${today}.jsonl
+
     - name: AI Enhancement Processing
       if: steps.dedup_check.outputs.has_new_content == 'true'
       run: |

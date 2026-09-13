@@ -105,9 +105,20 @@ esac
 
 cd ..
 
-# 第三步：AI处理 / Step 3: AI processing
+# 第三步：批量补全元数据 / Step 3: Batch enrich paper metadata
+echo "步骤3：批量补全论文元数据... / Step 3: Batch enriching paper metadata..."
+export OPENALEX_MAILTO="${OPENALEX_MAILTO:-$EMAIL}"
+python daily_arxiv/enrich.py --data data/${today}.jsonl
+
+if [ $? -ne 0 ]; then
+    echo "❌ 批量补全元数据失败 / Batch enrichment failed"
+    exit 1
+fi
+echo "✅ 批量补全元数据完成 / Batch enrichment completed"
+
+# 第四步：AI处理 / Step 4: AI processing
 if [ "$PARTIAL_MODE" = "false" ]; then
-    echo "步骤3：AI增强处理... / Step 3: AI enhancement processing..."
+    echo "步骤4：AI增强处理... / Step 4: AI enhancement processing..."
     cd ai
     python enhance.py --data ../data/${today}.jsonl
     
@@ -121,8 +132,8 @@ else
     echo "⏭️  跳过AI处理（部分模式）/ Skipping AI processing (partial mode)"
 fi
 
-# 第四步：转换为Markdown / Step 4: Convert to Markdown
-echo "步骤4：转换为Markdown... / Step 4: Converting to Markdown..."
+# 第五步：转换为Markdown / Step 5: Convert to Markdown
+echo "步骤5：转换为Markdown... / Step 5: Converting to Markdown..."
 cd to_md
 
 if [ "$PARTIAL_MODE" = "false" ] && [ -f "../data/${today}_AI_enhanced_${LANGUAGE}.jsonl" ]; then

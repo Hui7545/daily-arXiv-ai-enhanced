@@ -18,8 +18,8 @@ No network or API key is required:
 
 ## Crawl test
 
-This exercises arXiv crawling, OpenAlex affiliation enrichment, output, and
-deduplication. It does not call the LLM:
+This exercises arXiv crawling, batch metadata enrichment, OpenAlex affiliation
+enrichment, output, and deduplication. It does not call the LLM:
 
 ```powershell
 .\.venv\Scripts\python.exe local_test\run.py --mode crawl --max-papers 5

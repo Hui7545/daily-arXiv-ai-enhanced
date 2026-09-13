@@ -168,6 +168,21 @@ def deduplicate(python, workspace, env, log_file):
     return True
 
 
+def enrich_metadata(python, workspace, env, log_file, date):
+    run_step(
+        "Batch enrich metadata",
+        [
+            python,
+            "daily_arxiv/enrich.py",
+            "--data",
+            f"data/{date}.jsonl",
+        ],
+        workspace,
+        env,
+        log_file,
+    )
+
+
 def enhance_filter_and_convert(
     python,
     workspace,
@@ -280,6 +295,13 @@ def main():
                 args.max_papers,
             )
             if deduplicate(python, workspace, env, log_file):
+                enrich_metadata(
+                    python,
+                    workspace,
+                    env,
+                    log_file,
+                    run_date,
+                )
                 if args.mode == "full":
                     enhance_filter_and_convert(
                         python,
