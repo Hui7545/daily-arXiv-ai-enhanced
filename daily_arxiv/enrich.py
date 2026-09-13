@@ -18,6 +18,8 @@ from daily_arxiv.pipelines import (
 
 
 ARXIV_BATCH_SIZE = 100
+ARXIV_NUM_RETRIES = 5
+ARXIV_RETRY_DELAY_SECONDS = 5
 
 
 def normalize_arxiv_id(value):
@@ -44,6 +46,15 @@ def load_items(path):
     return items
 
 
+def has_complete_metadata(item):
+    """Return whether a crawler item already contains LLM input fields."""
+    return bool(
+        str(item.get("title") or "").strip()
+        and item.get("authors")
+        and str(item.get("summary") or "").strip()
+    )
+
+
 def write_items(items, path):
     """Atomically rewrite the jsonl file after enrichment."""
     directory = os.path.dirname(os.path.abspath(path))
@@ -64,7 +75,11 @@ def write_items(items, path):
 def fetch_arxiv_records(ids):
     """Fetch arXiv metadata by id_list batches instead of one call per paper."""
     records = {}
-    client = arxiv.Client()
+    client = arxiv.Client(
+        page_size=ARXIV_BATCH_SIZE,
+        delay_seconds=ARXIV_RETRY_DELAY_SECONDS,
+        num_retries=ARXIV_NUM_RETRIES,
+    )
     for batch in chunk_ids(ids):
         search = arxiv.Search(
             id_list=batch,
@@ -76,14 +91,17 @@ def fetch_arxiv_records(ids):
 
 
 def enrich_item(item, paper, openalex_pipeline, logger):
-    """Add full arXiv metadata and OpenAlex affiliations to one raw record."""
+    """Fill missing arXiv metadata and add OpenAlex affiliations."""
     item["pdf"] = f"https://arxiv.org/pdf/{item['id']}"
     item["abs"] = f"https://arxiv.org/abs/{item['id']}"
-    item["authors"] = [author.name for author in paper.authors]
-    item["title"] = paper.title
-    item["categories"] = paper.categories
-    item["comment"] = paper.comment
-    item["summary"] = paper.summary
+    if paper:
+        item["authors"] = item.get("authors") or [
+            author.name for author in paper.authors
+        ]
+        item["title"] = item.get("title") or paper.title
+        item["categories"] = item.get("categories") or paper.categories
+        item["comment"] = item.get("comment") or paper.comment
+        item["summary"] = item.get("summary") or paper.summary
     openalex_work = openalex_pipeline.fetch_openalex_work(
         item["id"],
         item["title"],
@@ -107,8 +125,15 @@ def main():
         print("No papers to enrich.", file=sys.stderr)
         sys.exit(1)
 
-    records = fetch_arxiv_records([item["id"] for item in items])
-    missing = [item["id"] for item in items if normalize_arxiv_id(item["id"]) not in records]
+    incomplete_ids = [
+        item["id"] for item in items if not has_complete_metadata(item)
+    ]
+    records = fetch_arxiv_records(incomplete_ids) if incomplete_ids else {}
+    missing = [
+        paper_id
+        for paper_id in incomplete_ids
+        if normalize_arxiv_id(paper_id) not in records
+    ]
     if missing:
         raise RuntimeError(
             f"Could not fetch metadata for {len(missing)} papers: {missing[:5]}"
@@ -116,7 +141,12 @@ def main():
 
     pipeline = DailyArxivPipeline()
     enriched = [
-        enrich_item(item, records[normalize_arxiv_id(item["id"])], pipeline, logger)
+        enrich_item(
+            item,
+            records.get(normalize_arxiv_id(item["id"])),
+            pipeline,
+            logger,
+        )
         for item in items
     ]
     write_items(enriched, args.data)

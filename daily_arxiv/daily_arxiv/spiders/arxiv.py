@@ -3,6 +3,17 @@ import os
 import re
 
 
+def clean_text(parts, prefix=None):
+    """Normalize an XPath text list and remove an optional label."""
+    text = " ".join(
+        part.strip() for part in parts if part and part.strip()
+    )
+    text = " ".join(text.split())
+    if prefix and text.startswith(prefix):
+        text = text[len(prefix) :].strip()
+    return text
+
+
 class ArxivSpider(scrapy.Spider):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -52,11 +63,26 @@ class ArxivSpider(scrapy.Spider):
             if not paper_dd:
                 continue
             
+            title = clean_text(
+                [paper_dd.css(".list-title").xpath("string(.)").get()],
+                "Title:",
+            )
+            authors = paper_dd.css(".list-authors a::text").getall()
+            authors = [
+                clean_text([author]) for author in authors if author.strip()
+            ]
+            comment = clean_text(
+                [paper_dd.css(".list-comments").xpath("string(.)").get()],
+                "Comments:",
+            )
+            summary = clean_text(
+                [paper_dd.css("p.mathjax").xpath("string(.)").get()]
+            )
+
             # 提取论文分类信息 - 在subjects部分
-            subjects_text = paper_dd.css(".list-subjects .primary-subject::text").get()
-            if not subjects_text:
-                # 如果找不到主分类，尝试其他方式获取分类
-                subjects_text = paper_dd.css(".list-subjects::text").get()
+            subjects_text = paper_dd.css(".list-subjects").xpath(
+                "string(.)"
+            ).get()
             
             if subjects_text:
                 # 解析分类信息，通常格式如 "Computer Vision and Pattern Recognition (cs.CV)"
@@ -64,11 +90,17 @@ class ArxivSpider(scrapy.Spider):
                 categories_in_paper = re.findall(r'\(([^)]+)\)', subjects_text)
                 
                 # 检查论文分类是否与目标分类有交集
-                paper_categories = set(categories_in_paper)
-                if paper_categories.intersection(self.target_categories):
+                paper_categories = list(dict.fromkeys(categories_in_paper))
+                if set(paper_categories).intersection(self.target_categories):
                     yield {
                         "id": arxiv_id,
-                        "categories": list(paper_categories),  # 添加分类信息用于调试
+                        "categories": paper_categories,
+                        "pdf": f"https://arxiv.org/pdf/{arxiv_id}",
+                        "abs": f"https://arxiv.org/abs/{arxiv_id}",
+                        "authors": authors,
+                        "title": title,
+                        "comment": comment or None,
+                        "summary": summary,
                     }
                     self.yielded_papers += 1
                     self.logger.info(f"Found paper {arxiv_id} with categories {paper_categories}")
@@ -80,5 +112,11 @@ class ArxivSpider(scrapy.Spider):
                 yield {
                     "id": arxiv_id,
                     "categories": [],
+                    "pdf": f"https://arxiv.org/pdf/{arxiv_id}",
+                    "abs": f"https://arxiv.org/abs/{arxiv_id}",
+                    "authors": authors,
+                    "title": title,
+                    "comment": comment or None,
+                    "summary": summary,
                 }
                 self.yielded_papers += 1
